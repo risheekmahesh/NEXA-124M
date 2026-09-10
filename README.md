@@ -2,7 +2,7 @@
 
 This is my small GPT-style language model project trained on [TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories).
 
-The original learning notebook is included in [`notebooks/llmfromscratch.ipynb`](notebooks/llmfromscratch.ipynb). It contains the longer experiments that led to this project: manual tokenization, vocabulary construction, sliding-window sampling, several attention versions, Transformer blocks, loss calculations, and early training attempts. The notebook is kept as a record of the work, while the Python files are the clean runnable version.
+The original learning notebook is included in [`notebooks/LLM_from_scratch.ipynb`](notebooks/LLM_from_scratch.ipynb). It contains the longer experiments that led to this project: manual tokenization, vocabulary construction, sliding-window sampling, several attention versions, Transformer blocks, loss calculations, and early training attempts. The notebook is kept as a record of the work, while the Python files are the clean runnable version.
 
 I reorganized the code so the main workflow is easy to follow:
 

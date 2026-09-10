@@ -1,11 +1,11 @@
 # Notebook history
 
-`llmfromscratch.ipynb` is the original learning notebook used while working through text tokenization, attention, Transformer blocks, loss calculation, and training.
+`LLM_from_scratch.ipynb` is the main learning notebook for this project. It contains the original experiments from text preprocessing through attention, Transformer blocks, GPT model construction, loss calculation, decoding, and pretraining.
 
-It is kept here as a record of the experiments. The runnable code for training on TinyStories is in `../nexa_124M/`:
+I also added a final TinyStories section. That section uses the clean code in `../nexa_124M/` to download TinyStories, create token windows, train the model, and save a checkpoint for `chat.py`.
 
-- `model.py` — model classes
-- `train.py` — data preparation and training
-- `chat.py` — inference
+The notebook is intentionally exploratory. For a reliable terminal workflow, use:
 
-The notebook contains exploratory cells and is not intended to be the main entry point for running the project.
+- `../nexa_124M/model.py` — model classes
+- `../nexa_124M/train.py` — data preparation and training
+- `../nexa_124M/chat.py` — inference
