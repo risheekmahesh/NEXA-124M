@@ -1,97 +1,74 @@
 # NEXA-124M
 
-NEXA stands for **Neural Exchange and Reasoning Architecture**. This is my attempt to understand how a small GPT-style language model works by implementing the main pieces myself in PyTorch.
+This is my small GPT-style language model project trained on [TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories).
 
-This repository started as a messy Colab notebook. I was following along with the basics of language models, testing tokenization, attention, Transformer blocks, and text generation. The first version did not run from start to finish, so I cleaned it up into a small project that I can actually explain and run.
+I reorganized the code so the main workflow is easy to follow:
 
-This is **not a finished chatbot** and it is not a pretrained model. The useful part of the project is the implementation and the learning process.
+- `model.py` contains the neural-network classes only.
+- `train.py` contains the TinyStories data loading, batching, loss, optimizer, training loop, evaluation, and checkpoint saving.
+- `chat.py` contains checkpoint loading and text generation only.
 
-## What works right now
+The default model is intentionally smaller than 124M parameters so that I can test the complete workflow. The model is still GPT-like, but a model definition is not the same thing as a successfully pretrained 124M model.
 
-The current version can:
-
-- tokenize text with the GPT-2 tokenizer from `tiktoken`;
-- create next-token prediction batches;
-- run tokens through a decoder-only Transformer;
-- calculate a cross-entropy loss;
-- generate tokens using greedy decoding or sampling; and
-- run a small CPU demonstration.
-
-The default demo uses a small model because I wanted something that could run locally without a GPU. There is also a `gpt2-small` configuration with roughly 124 million parameters, but defining that model is very different from successfully pretraining it.
-
-## A quick look at the model
-
-The model is made up of the same basic pieces I was trying to understand in the original notebook:
-
-1. token embeddings and positional embeddings;
-2. masked multi-head self-attention;
-3. feed-forward layers with GELU;
-4. residual connections and layer normalization; and
-5. a final projection to vocabulary logits.
-
-More detail is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). I kept the code split into a few files so it is easier to read than the original notebook.
-
-## Run it
+## Setup
 
 ```bash
-git clone https://github.com/risheekmahesh/NEXA-124M.git
-cd NEXA-124M
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python examples/quickstart.py
 ```
 
-To run the tests:
+## Train on TinyStories
+
+The dataset is downloaded automatically through the Hugging Face `datasets` library.
+
+For a small first run:
 
 ```bash
-python -m pytest -q
+cd tinystories_lm
+python train.py --max-stories 200 --context-length 64 --batch-size 4 --epochs 1 --log-every 10
 ```
 
-The generated text from the quickstart will not be sensible because the model starts with random weights. That is expected. The quickstart is mainly checking that the forward pass, loss, and generation path work.
+The checkpoint is saved to:
 
-## Model sizes
-
-| Name | Layers | Hidden size | Attention heads | Why it is here |
-| --- | ---: | ---: | ---: | --- |
-| `tiny` | 2 | 128 | 4 | Runs quickly on a CPU for demonstrations |
-| `gpt2-small` | 12 | 768 | 12 | Approximate 124M-parameter architecture |
-
-Example:
-
-```python
-from nexa import GPTModel
-from configs.model_configs import get_config
-
-model = GPTModel(get_config("tiny"))
-print(model.num_parameters())
+```text
+checkpoints/tinystories.pt
 ```
 
-## What I learned from the first attempt
+For a larger run, increase `--max-stories`, `--context-length`, and `--epochs`. The full TinyStories dataset is large, so training it from scratch can take a long time and needs suitable hardware.
 
-The original notebook had several problems that made it hard to present or reproduce:
+## Generate text
 
-- package installation commands were mixed into code cells;
-- some cells depended on variables created much earlier;
-- the training text was downloaded in the middle of the notebook;
-- different configuration values were used at different points; and
-- a model being created successfully was confused with a model being trained successfully.
+After training:
 
-This repository is my second pass. It is deliberately smaller. I would rather have a version with a working smoke test and clearly stated limitations than claim that I trained a useful 124M model when I did not.
+```bash
+cd tinystories_lm
+python chat.py --checkpoint checkpoints/tinystories.pt --prompt "Once upon a time" --tokens 100
+```
 
-## Limitations and next steps
+Temperature can be set to `0` for greedy generation or to a value such as `0.8` for sampling:
 
-There is no pretrained checkpoint in this repository. I have not included a complete long-running pretraining script, distributed training, instruction tuning, or a chat interface. The next useful step would be to add a small training script and record loss curves on a clearly documented dataset.
+```bash
+python chat.py --checkpoint checkpoints/tinystories.pt --prompt "The little dragon" --temperature 0.8 --top-k 40
+```
 
-I also want to compare the attention implementation against a few hand-calculated examples instead of only checking tensor shapes. That would make the project a better learning exercise.
+## File organization
 
-## References
+`model.py` defines the model configuration, GELU, feed-forward network, causal multi-head self-attention, Transformer block, and GPT model. It does not download data or run training.
 
-The model design is based on the Transformer architecture and GPT-style autoregressive language modeling:
+`train.py` downloads the `roneneldan/TinyStories` dataset, tokenizes the stories with the GPT-2 tokenizer, creates input/target windows, trains with AdamW, prints training and validation loss, and saves a checkpoint.
+
+`chat.py` loads the saved model configuration and weights, encodes a prompt, and generates new tokens. It does not import the dataset or optimizer.
+
+## Notes
+
+The model starts with random weights. A very short training run is mainly a test that the pipeline works. The generated stories will improve only after training for long enough on enough data.
+
+The GPT-2 tokenizer has a vocabulary of 50,257 tokens. The default model uses four Transformer blocks, a 256-dimensional embedding, four attention heads, and a context length of 256. These values can be changed in `model.py` or exposed as command-line options in `train.py`.
+
+## Reference
+
+The architecture follows the decoder-only Transformer design from *Attention Is All You Need* [1] and the GPT-style autoregressive language-modeling approach [2].
 
 [1]: https://arxiv.org/abs/1706.03762 "Attention Is All You Need"
 [2]: https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf "Language Models are Unsupervised Multitask Learners"
-
-## License
-
-MIT. See [`LICENSE`](LICENSE).
