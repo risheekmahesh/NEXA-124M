@@ -1,51 +1,37 @@
 # NEXA-124M
 
-**NEXA** — Neural Exchange and Reasoning Architecture — is an educational decoder-only Transformer language model implemented from first principles in PyTorch.
+NEXA stands for **Neural Exchange and Reasoning Architecture**. This is my attempt to understand how a small GPT-style language model works by implementing the main pieces myself in PyTorch.
 
-This repository is a cleaned and reproducible continuation of my first attempt to build a language model from scratch. It focuses on the core mechanics behind GPT-style models: token embeddings, positional embeddings, causal self-attention, feed-forward networks, residual connections, layer normalization, next-token prediction, training, and text generation.
+This repository started as a messy Colab notebook. I was following along with the basics of language models, testing tokenization, attention, Transformer blocks, and text generation. The first version did not run from start to finish, so I cleaned it up into a small project that I can actually explain and run.
 
-> **Project status:** The implementation is complete as an educational GPT-style model. The default demo uses a tiny configuration so it can run on a CPU. The included `gpt2-small` configuration is approximately 124 million parameters and requires a suitable GPU, dataset, and training time for meaningful results.
+This is **not a finished chatbot** and it is not a pretrained model. The useful part of the project is the implementation and the learning process.
 
-## What this project demonstrates
+## What works right now
 
-| Area | Implementation |
-| --- | --- |
-| Tokenization | GPT-2 byte-pair encoding through `tiktoken` |
-| Input pipeline | Sliding windows of input and target token sequences |
-| Architecture | Decoder-only Transformer |
-| Attention | Multi-head causal self-attention |
-| Non-linearity | GELU activation |
-| Optimization | AdamW with cross-entropy loss |
-| Generation | Greedy or temperature/top-k sampling |
-| Evaluation | Training and validation loss, plus perplexity |
-| Reproducibility | Fixed seeds, configuration-driven model construction, and smoke tests |
+The current version can:
 
-## Repository layout
+- tokenize text with the GPT-2 tokenizer from `tiktoken`;
+- create next-token prediction batches;
+- run tokens through a decoder-only Transformer;
+- calculate a cross-entropy loss;
+- generate tokens using greedy decoding or sampling; and
+- run a small CPU demonstration.
 
-```text
-.
-├── README.md
-├── LICENSE
-├── requirements.txt
-├── configs/
-│   └── model_configs.py
-├── docs/
-│   └── ARCHITECTURE.md
-├── examples/
-│   └── quickstart.py
-├── src/
-│   └── nexa/
-│       ├── __init__.py
-│       ├── data.py
-│       ├── model.py
-│       └── generation.py
-└── tests/
-    └── test_model.py
-```
+The default demo uses a small model because I wanted something that could run locally without a GPU. There is also a `gpt2-small` configuration with roughly 124 million parameters, but defining that model is very different from successfully pretraining it.
 
-## Quick start
+## A quick look at the model
 
-The project requires Python 3.10 or newer. A virtual environment is recommended.
+The model is made up of the same basic pieces I was trying to understand in the original notebook:
+
+1. token embeddings and positional embeddings;
+2. masked multi-head self-attention;
+3. feed-forward layers with GELU;
+4. residual connections and layer normalization; and
+5. a final projection to vocabulary logits.
+
+More detail is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). I kept the code split into a few files so it is easier to read than the original notebook.
+
+## Run it
 
 ```bash
 git clone https://github.com/risheekmahesh/NEXA-124M-clean.git
@@ -53,70 +39,59 @@ cd NEXA-124M-clean
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-```
-
-Run the CPU-friendly demonstration:
-
-```bash
 python examples/quickstart.py
 ```
 
-Run the test suite:
+To run the tests:
 
 ```bash
-python -m pytest
+python -m pytest -q
 ```
 
-The quickstart constructs a small model, performs a forward pass, calculates the next-token loss, and generates a short continuation. This validates the complete model path without pretending that a tiny untrained model is a useful chatbot.
+The generated text from the quickstart will not be sensible because the model starts with random weights. That is expected. The quickstart is mainly checking that the forward pass, loss, and generation path work.
 
-## Model configurations
+## Model sizes
 
-The configuration module includes the following presets:
+| Name | Layers | Hidden size | Attention heads | Why it is here |
+| --- | ---: | ---: | ---: | --- |
+| `tiny` | 2 | 128 | 4 | Runs quickly on a CPU for demonstrations |
+| `gpt2-small` | 12 | 768 | 12 | Approximate 124M-parameter architecture |
 
-| Preset | Layers | Embedding size | Heads | Approximate parameters | Intended use |
-| --- | ---: | ---: | ---: | ---: | --- |
-| `tiny` | 2 | 128 | 4 | A few million | CPU demonstrations and tests |
-| `gpt2-small` | 12 | 768 | 12 | 124M | Research and training experiments |
-
-Create a model in Python:
+Example:
 
 ```python
-from nexa import GPTModel, get_config
+from nexa import GPTModel
+from configs.model_configs import get_config
 
 model = GPTModel(get_config("tiny"))
-print(f"Parameters: {model.num_parameters():,}")
+print(model.num_parameters())
 ```
 
-## Training on your own text
+## What I learned from the first attempt
 
-The model learns next-token prediction from plain text. A training-ready dataset should be large enough to contain diverse examples and should be legally usable for the intended purpose.
+The original notebook had several problems that made it hard to present or reproduce:
 
-The basic training loop is:
+- package installation commands were mixed into code cells;
+- some cells depended on variables created much earlier;
+- the training text was downloaded in the middle of the notebook;
+- different configuration values were used at different points; and
+- a model being created successfully was confused with a model being trained successfully.
 
-1. Read and clean a text corpus.
-2. Split the corpus into training and validation portions.
-3. Convert text into GPT-2 token IDs.
-4. Build fixed-length input/target windows.
-5. Feed input tokens through the Transformer.
-6. Compare logits with the target tokens using cross-entropy.
-7. Update weights with AdamW.
-8. Monitor validation loss and generate samples periodically.
+This repository is my second pass. It is deliberately smaller. I would rather have a version with a working smoke test and clearly stated limitations than claim that I trained a useful 124M model when I did not.
 
-The source notebook that inspired this repository mixed implementation cells, package installation commands, downloaded data, and large-scale experiments in one file. This version separates reusable code from demonstrations so each component can be tested and explained independently.
+## Limitations and next steps
 
-## Limitations
+There is no pretrained checkpoint in this repository. I have not included a complete long-running pretraining script, distributed training, instruction tuning, or a chat interface. The next useful step would be to add a small training script and record loss curves on a clearly documented dataset.
 
-NEXA-124M is an educational implementation, not a production assistant. It does not include instruction tuning, preference optimization, distributed training, tokenizer training, checkpoint conversion, safety filtering, a web interface, or a pretrained checkpoint. A randomly initialized model will generate poor text until it has been trained on a sufficiently large corpus.
+I also want to compare the attention implementation against a few hand-calculated examples instead of only checking tensor shapes. That would make the project a better learning exercise.
 
-The 124M configuration is intentionally provided as an architecture target. Running it end-to-end is compute-intensive, and a successful forward pass is not equivalent to successful pretraining.
+## References
 
-## Learning references
-
-The implementation follows the standard decoder-only Transformer design introduced by Vaswani et al. and the GPT-2-style language-modeling approach. The repository is intended to be read alongside the source code and architecture notes in `docs/ARCHITECTURE.md`.
-
-## License
-
-This project is released under the MIT License. See [LICENSE](LICENSE).
+The model design is based on the Transformer architecture and GPT-style autoregressive language modeling:
 
 [1]: https://arxiv.org/abs/1706.03762 "Attention Is All You Need"
 [2]: https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf "Language Models are Unsupervised Multitask Learners"
+
+## License
+
+MIT. See [`LICENSE`](LICENSE).
