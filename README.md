@@ -34,8 +34,8 @@ More detail is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). I kept the cod
 ## Run it
 
 ```bash
-git clone https://github.com/risheekmahesh/NEXA-124M-clean.git
-cd NEXA-124M-clean
+git clone https://github.com/risheekmahesh/NEXA-124M.git
+cd NEXA-124M
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
