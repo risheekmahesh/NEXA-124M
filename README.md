@@ -27,7 +27,7 @@ The dataset is downloaded automatically through the Hugging Face `datasets` libr
 For a small first run:
 
 ```bash
-cd tinystories_lm
+cd nexa_124M
 python train.py --max-stories 200 --context-length 64 --batch-size 4 --epochs 1 --log-every 10
 ```
 
@@ -44,7 +44,7 @@ For a larger run, increase `--max-stories`, `--context-length`, and `--epochs`. 
 After training:
 
 ```bash
-cd tinystories_lm
+cd nexa_124M
 python chat.py --checkpoint checkpoints/tinystories.pt --prompt "Once upon a time" --tokens 100
 ```
 
