@@ -70,7 +70,7 @@ The model starts with random weights. A very short training run is mainly a test
 
 The notebook is exploratory and follows the order in which I learned the ideas. It includes intermediate outputs and some cells that depend on earlier cells. It is useful for showing the learning process, but it is not the most reliable way to run the model.
 
-The Python version removes that hidden notebook state. `train.py` contains the reusable versions of dataset creation, loss calculation, evaluation, training, and checkpoint saving. `chat.py` contains only inference. This is the version to use from a terminal.
+The Python files are a direct separation of the notebook code, not a different model. The same model classes are in `nexa_124M/model.py`, the same sliding-window dataset and loss/training functions are in `nexa_124M/train.py`, and the same greedy, temperature, and top-k generation functions are in `nexa_124M/chat.py`. This is the version to use from a terminal.
 
 The GPT-2 tokenizer has a vocabulary of 50,257 tokens. The default model uses four Transformer blocks, a 256-dimensional embedding, four attention heads, and a context length of 256. These values can be changed in `model.py` or exposed as command-line options in `train.py`.
 
