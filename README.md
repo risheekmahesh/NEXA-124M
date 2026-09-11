@@ -24,11 +24,19 @@ pip install -r requirements.txt
 
 The dataset is downloaded automatically through the Hugging Face `datasets` library.
 
-For a small first run:
+For a pipeline check:
 
 ```bash
 cd nexa_124M
-python train.py --max-stories 200 --context-length 64 --batch-size 4 --epochs 1 --log-every 10
+python train.py --max-stories 100 --validation-stories 100 --context-length 64 --batch-size 4 --epochs 1 --eval-freq 10
+```
+
+This check proves that downloading, tokenizing, batching, backpropagation, and checkpoint saving work. It will **not** produce a good story model.
+
+For a meaningful small CPU/GPU experiment, use more data and more updates:
+
+```bash
+python train.py --max-stories 5000 --validation-stories 500 --context-length 128 --batch-size 8 --epochs 2 --eval-freq 100
 ```
 
 The checkpoint is saved to:
@@ -45,7 +53,7 @@ After training:
 
 ```bash
 cd nexa_124M
-python chat.py --checkpoint checkpoints/tinystories.pt --prompt "Once upon a time" --tokens 100
+python chat.py --checkpoint checkpoints/tinystories.pt --prompt "Once upon a time" --tokens 100 --temperature 0.8 --top-k 40
 ```
 
 Temperature can be set to `0` for greedy generation or to a value such as `0.8` for sampling:
@@ -64,7 +72,11 @@ python chat.py --checkpoint checkpoints/tinystories.pt --prompt "The little drag
 
 ## Notes
 
-The model starts with random weights. A very short training run is mainly a test that the pipeline works. The generated stories will improve only after training for long enough on enough data.
+The model starts with random weights. A very short training run is mainly a test that the pipeline works. The generated stories will improve only after training for long enough on enough data. If the output is still punctuation or repeated words, check the validation loss and train for more updates instead of judging the architecture from a ten-story run.
+
+In a local verification run on 200 TinyStories examples, the validation loss dropped from about `10.8` to `5.5` in the first epoch. That confirms that the weights are learning the training objective. It is still not enough data for a fluent language model, so the longer command above is the appropriate experiment for judging generated stories.
+
+`chat.py` now uses temperature and top-k sampling by default, applies a small repetition penalty, handles `--top-k 0` as no top-k filtering, and does not stop immediately when the model predicts the end-of-story token.
 
 ## Notebook versus Python files
 

@@ -54,7 +54,9 @@ def load_text(dataset_name="roneneldan/TinyStories", split="train", max_stories=
     dataset = load_dataset(dataset_name, split=split)
     if max_stories is not None:
         dataset = dataset.select(range(min(max_stories, len(dataset))))
-    return "\n\n".join(dataset["text"])
+    # Keep an explicit boundary between stories. Without this, the model is
+    # trained to continue one story directly into the next story.
+    return "\n\n<|endoftext|>\n\n".join(dataset["text"])
 
 
 def encode_text(text, tokenizer):
@@ -127,6 +129,7 @@ def train_model_simple(model, train_loader, val_loader, optimizer, device,
             optimizer.zero_grad(set_to_none=True)
             loss = calc_loss_batch(input_batch, target_batch, model, device)
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
             tokens_seen += input_batch.numel()
             global_step += 1
@@ -155,13 +158,14 @@ def save_checkpoint(path, model, train_losses, val_losses, tokens_seen):
 def parse_args():
     parser = argparse.ArgumentParser(description="Train the notebook GPT model on TinyStories")
     parser.add_argument("--model-size", choices=["tiny", "124m"], default="tiny")
-    parser.add_argument("--max-stories", type=int, default=200)
+    parser.add_argument("--max-stories", type=int, default=5000,
+                        help="More stories are needed before generated text becomes coherent")
     parser.add_argument("--validation-stories", type=int, default=100)
-    parser.add_argument("--context-length", type=int, default=64)
-    parser.add_argument("--batch-size", type=int, default=4)
+    parser.add_argument("--context-length", type=int, default=128)
+    parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--stride", type=int, default=None)
-    parser.add_argument("--epochs", type=int, default=1)
-    parser.add_argument("--eval-freq", type=int, default=10)
+    parser.add_argument("--epochs", type=int, default=2)
+    parser.add_argument("--eval-freq", type=int, default=100)
     parser.add_argument("--eval-iter", type=int, default=5)
     parser.add_argument("--learning-rate", type=float, default=4e-4)
     parser.add_argument("--seed", type=int, default=123)
